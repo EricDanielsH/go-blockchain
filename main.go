@@ -16,7 +16,7 @@ type Block struct {
 }
 
 // Set the hash of a block
-func (b *Block) setHash() {
+func (b *Block) SetHash() {
 	// Convert timestamp from int64 to byte slice. First convert to string and then to []byte
 	timestamp := []byte(strconv.FormatInt(b.Timestamp, 10))
 	// Join together Timestamp, PrevHash and Data to create a new header
@@ -28,13 +28,36 @@ func (b *Block) setHash() {
 }
 
 // Create a new Block
-func newBlock(data string, prevHash []byte) *Block {
+func NewBlock(data string, prevHash []byte) *Block {
 	// Create a pointer to a new Block with the data
 	block := &Block{time.Now().Unix(), prevHash, []byte{}, []byte(data)}
 	// Compute the hash with setHash()
-	block.setHash()
-  // Return block
+	block.SetHash()
+	// Return block
 	return block
+}
+
+// Create Blockchain type
+type Blockchain struct {
+	blocks []*Block
+}
+
+// Add block to the blockchain
+func (bc *Blockchain) AddBlock(data string) {
+	// Get the previous block
+	prevBlock := bc.blocks[len(bc.blocks)-1]
+	newBlock := NewBlock(data, prevBlock.Hash)
+	bc.blocks = append(bc.blocks, newBlock)
+}
+
+// Create Genesis Block
+func NewGenesisBlock() *Block {
+	return NewBlock("Genesis Block", []byte{})
+}
+
+// Create a blockchain
+func NewBlockchain() *Blockchain {
+	return &Blockchain{[]*Block{NewGenesisBlock()}}
 }
 
 func main() {
