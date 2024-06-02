@@ -24,7 +24,7 @@ func NewBlock(data string, prevHash []byte) *Block {
   nonce, hash := pow.Run()
 
   block.Nonce = nonce
-  block.Hash = hash[:]
+  block.Hash = hash
 
 	// Return block
 	return block
