@@ -70,3 +70,14 @@ func (pow *ProofOfWork) Run() (int, []byte) {
 }
 
 // Validate POW
+func (pow *ProofOfWork) Validate() bool {
+  var bigHash big.Int
+
+  data := pow.PrepareData(pow.block.Nonce)
+  hash := sha256.Sum256(data)
+  bigHash.SetBytes(hash[:])
+  isValid := bigHash.Cmp(pow.target) == -1
+
+
+  return isValid
+}
