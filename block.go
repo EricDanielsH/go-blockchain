@@ -57,7 +57,7 @@ func (b *Block) SerialiseBlock() []byte {
 
 
 // Deserialise the block
-func  SerialiseBlock(d []byte) *Block {
+func  DeserialiseBlock(d []byte) *Block {
   // Create a block var where the data will be deserialised
   var block Block
   // Create a deserialiser that contains a reader with the data
