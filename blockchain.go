@@ -21,12 +21,54 @@ type Blockchain struct {
   db *bbolt.DB
 }
 
-// Add block to the blockchain
+// OLD Add block to the blockchain
+// func (bc *Blockchain) AddBlock(data string) {
+// 	// Get the previous block
+// 	prevBlock := bc.blocks[len(bc.blocks)-1]
+// 	newBlock := NewBlock(data, prevBlock.Hash)
+// 	bc.blocks = append(bc.blocks, newBlock)
+// }
+
+// Add a block to the blockchain
 func (bc *Blockchain) AddBlock(data string) {
-	// Get the previous block
-	prevBlock := bc.blocks[len(bc.blocks)-1]
-	newBlock := NewBlock(data, prevBlock.Hash)
-	bc.blocks = append(bc.blocks, newBlock)
+  // Create var to save the hash of the last block
+  var lastHash []byte
+
+  // Get the last hash
+  err := bc.db.View( func(tx *bbolt.Tx) error {
+    // Get the bucket where the blockchain is
+    b := tx.Bucket([]byte(blocksBucket))
+    // Get the lastHash
+    lastHash = b.Get([]byte("l"))
+    return nil
+  })
+  if err != nil {
+    fmt.Print("Error while getting lastHash")
+  }
+
+  // Create a newBlock
+  newBlock := NewBlock(data, lastHash)
+
+  // Add newBlock + update lastHash to bucket
+  err = bc.db.Update( func(tx *bbolt.Tx) error{
+    // Get the bucket that contains the blocks
+    b := tx.Bucket([]byte(blocksBucket))
+    // Add the new block to the bucket
+    err = b.Put(newBlock.Hash, newBlock.SerialiseBlock())
+    if err != nil {
+      fmt.Print("Error while adding the newBlock to database")
+    }
+    // Update the last hash of the blockchain
+    err = b.Put([]byte("l"), newBlock.Hash)
+    if err != nil {
+      fmt.Print("Error while updating the last hash in the database")
+    }
+    // Update the tip of the blockchain struct
+    bc.tip = newBlock.Hash
+
+    return nil
+  })
+
 }
 
 
