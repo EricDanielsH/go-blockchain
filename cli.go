@@ -95,17 +95,17 @@ func (cli *CLI) printChain() {
   for {
     block := bci.Next()
 
-    fmt.Printf("Prev. Hash: %x", block.PrevHash)
-    fmt.Printf("Hash: %x", block.Hash)
-    fmt.Printf("Data: %s", block.Data)
+    fmt.Printf("Prev. Hash: %x\n", block.PrevHash)
+    fmt.Printf("Hash: %x\n", block.Hash)
+    fmt.Printf("Data: %s\n", block.Data)
     // Check the POW of this block
     pow := NewProofOfWork(block)
-    fmt.Printf("Proof of Work: %s", strconv.FormatBool(pow.Validate()))
+    fmt.Printf("Proof of Work: %s\n", strconv.FormatBool(pow.Validate()))
     fmt.Println()
-    
 
     // Break the loop when the genesis block is reached
     if len(block.PrevHash) == 0 {
+      fmt.Println("End of the blockchain!")
       break
     }
   }
