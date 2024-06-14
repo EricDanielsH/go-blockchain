@@ -17,8 +17,8 @@ const blocksBucket = "blocks"
 // }
 
 type Blockchain struct {
-  tip []byte
-  db *bbolt.DB
+	tip []byte
+	db  *bbolt.DB
 }
 
 // OLD Add block to the blockchain
@@ -31,46 +31,45 @@ type Blockchain struct {
 
 // Add a block to the blockchain
 func (bc *Blockchain) AddBlock(data string) {
-  // Create var to save the hash of the last block
-  var lastHash []byte
+	// Create var to save the hash of the last block
+	var lastHash []byte
 
-  // Get the last hash
-  err := bc.db.View( func(tx *bbolt.Tx) error {
-    // Get the bucket where the blockchain is
-    b := tx.Bucket([]byte(blocksBucket))
-    // Get the lastHash
-    lastHash = b.Get([]byte("l"))
-    return nil
-  })
-  if err != nil {
-    fmt.Print("Error while getting lastHash")
-  }
+	// Get the last hash
+	err := bc.db.View(func(tx *bbolt.Tx) error {
+		// Get the bucket where the blockchain is
+		b := tx.Bucket([]byte(blocksBucket))
+		// Get the lastHash
+		lastHash = b.Get([]byte("l"))
+		return nil
+	})
+	if err != nil {
+		fmt.Print("Error while getting lastHash")
+	}
 
-  // Create a newBlock
-  newBlock := NewBlock(data, lastHash)
+	// Create a newBlock
+	newBlock := NewBlock(data, lastHash)
 
-  // Add newBlock + update lastHash to bucket
-  err = bc.db.Update( func(tx *bbolt.Tx) error{
-    // Get the bucket that contains the blocks
-    b := tx.Bucket([]byte(blocksBucket))
-    // Add the new block to the bucket
-    err = b.Put(newBlock.Hash, newBlock.SerialiseBlock())
-    if err != nil {
-      fmt.Print("Error while adding the newBlock to database")
-    }
-    // Update the last hash of the blockchain
-    err = b.Put([]byte("l"), newBlock.Hash)
-    if err != nil {
-      fmt.Print("Error while updating the last hash in the database")
-    }
-    // Update the tip of the blockchain struct
-    bc.tip = newBlock.Hash
+	// Add newBlock + update lastHash to bucket
+	err = bc.db.Update(func(tx *bbolt.Tx) error {
+		// Get the bucket that contains the blocks
+		b := tx.Bucket([]byte(blocksBucket))
+		// Add the new block to the bucket
+		err = b.Put(newBlock.Hash, newBlock.SerialiseBlock())
+		if err != nil {
+			fmt.Print("Error while adding the newBlock to database")
+		}
+		// Update the last hash of the blockchain
+		err = b.Put([]byte("l"), newBlock.Hash)
+		if err != nil {
+			fmt.Print("Error while updating the last hash in the database")
+		}
+		// Update the tip of the blockchain struct
+		bc.tip = newBlock.Hash
 
-    return nil
-  })
+		return nil
+	})
 
 }
-
 
 // Old Create a blockchain
 // func NewBlockchain() *Blockchain {
@@ -79,53 +78,59 @@ func (bc *Blockchain) AddBlock(data string) {
 
 // New blockchain builder
 func NewBlockchain() *Blockchain {
-  // Create var for the tip of the blockchain
-  var tip []byte
-  // Open the database connection (file, fileMode, otherOptions)
-  db, err := bbolt.Open(dbFile, 0600, nil)
+	// Create var for the tip of the blockchain
+	var tip []byte
+	// Open the database connection (file, fileMode, otherOptions)
+	db, err := bbolt.Open(dbFile, 0600, nil)
 
-  if err != nil {
-    fmt.Print("Error while opening the DB connection in blockchain creation")
-    os.Exit(1)
-  }
+	if err != nil {
+		fmt.Print("Error while opening the DB connection in blockchain creation")
+		os.Exit(1)
+	}
 
-  // Write/Update the database
-  err = db.Update(func(tx *bbolt.Tx) error {
-    // Get a bucket from the database
-    b := tx.Bucket([]byte(blocksBucket))
-    
-    // If the bucket doesn't exist
-    if b == nil {
-      // Generate a new GenesisBlock
-      genesis := NewGenesisBlock()
-      // Create a bucket with the blocksBucket key
-      b, err = tx.CreateBucket([]byte(blocksBucket))
-      if err != nil {
-        fmt.Print("Error while creating new bucket in NewBlockchain()")
-      }
-      // Add the block data with the block hash as its key
-      err = b.Put(genesis.Hash, genesis.SerialiseBlock())
-      if err != nil {
-        fmt.Print("Error while putting block into bucket")
-        return errors.New("Error while putting block into bucket")
-      }
-      // Add the last hash with "l" key
-      err = b.Put([]byte("l"), genesis.Hash)
-      if err != nil {
-        fmt.Print("Error while putting last hash into bucket")
-        return errors.New("Error while putting last hash into bucket")
-      }
+	// Write/Update the database
+	err = db.Update(func(tx *bbolt.Tx) error {
+		// Get a bucket from the database
+		b := tx.Bucket([]byte(blocksBucket))
 
-    } else {
-      // Get the last hash with the key "l"
-      tip = b.Get([]byte("l"))
-    }
-    return nil
+		// If the bucket doesn't exist
+		if b == nil {
+			// Generate a new GenesisBlock
+			genesis := NewGenesisBlock()
+			// Create a bucket with the blocksBucket key
+			b, err = tx.CreateBucket([]byte(blocksBucket))
+			if err != nil {
+				fmt.Print("Error while creating new bucket in NewBlockchain()")
+			}
+			// Add the block data with the block hash as its key
+			err = b.Put(genesis.Hash, genesis.SerialiseBlock())
+			if err != nil {
+				fmt.Print("Error while putting block into bucket")
+				return errors.New("Error while putting block into bucket")
+			}
+			// Add the last hash with "l" key
+			err = b.Put([]byte("l"), genesis.Hash)
+			if err != nil {
+				fmt.Print("Error while putting last hash into bucket")
+				return errors.New("Error while putting last hash into bucket")
+			}
 
-  })
+		} else {
+			// Get the last hash with the key "l"
+			tip = b.Get([]byte("l"))
+		}
+		return nil
 
-  // Create a new blockchain pointer
-  bc := &Blockchain{tip, db}
+	})
 
-  return bc
+	// Create a new blockchain pointer
+	bc := &Blockchain{tip, db}
+
+	return bc
+}
+
+// Blockchain Iterator struct
+type BlockchainIterator struct {
+	currentHash []byte
+	db          *bbolt.DB
 }
