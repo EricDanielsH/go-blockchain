@@ -141,3 +141,28 @@ func (bc *Blockchain) NewBlockchainIterator() *BlockchainIterator {
 
 	return bci
 }
+
+// Save and return the next block in the iterator
+func (i *BlockchainIterator) Next() *Block {
+  // Create a block var to save the next block
+  var block *Block
+  // Get the current block that the Iterator is pointing to
+  err := i.db.View( func(tx *bbolt.Tx) error {
+    // Open bucket
+    b := tx.Bucket([]byte(blocksBucket))
+    // Get the block data (in bytes) that iterator is pointing to
+    encodedBlock := b.Get(i.currentHash)
+    // Deserialise the block
+    block = DeserialiseBlock(encodedBlock)
+
+    return nil
+  })
+  if err != nil {
+    fmt.Print("Error while taking iterator block from DB")
+  }
+
+  // Update the iterator to get the next block
+  i.currentHash = block.PrevHash
+
+  return block
+}
