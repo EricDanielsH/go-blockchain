@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strconv"
 )
 
 // CLI struct
@@ -69,7 +70,7 @@ func (cli *CLI) Run() {
       cli.printUsage()
       os.Exit(1)
     }
-    cli.AddBlock(*addBlockData)
+    cli.addBlock(*addBlockData)
   }
 
   // Run printChain if it was populated
@@ -77,4 +78,35 @@ func (cli *CLI) Run() {
     cli.printChain()
   }
 
+}
+
+// Add block cli method
+func (cli *CLI) addBlock(data string) {
+  cli.bc.AddBlock(data)
+  fmt.Println("New block added succesfully!")
+}
+
+// Print blockchain cli method
+func (cli *CLI) printChain() {
+  // Create a new iterator
+  bci := cli.bc.NewBlockchainIterator()
+
+  // Run through every block 
+  for {
+    block := bci.Next()
+
+    fmt.Printf("Prev. Hash: %x", block.PrevHash)
+    fmt.Printf("Hash: %x", block.Hash)
+    fmt.Printf("Data: %s", block.Data)
+    // Check the POW of this block
+    pow := NewProofOfWork(block)
+    fmt.Printf("Proof of Work: %s", strconv.FormatBool(pow.Validate()))
+    fmt.Println()
+    
+
+    // Break the loop when the genesis block is reached
+    if len(block.PrevHash) == 0 {
+      break
+    }
+  }
 }
