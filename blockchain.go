@@ -134,3 +134,10 @@ type BlockchainIterator struct {
 	currentHash []byte
 	db          *bbolt.DB
 }
+
+// Create a new blockchain iterator
+func (bc *Blockchain) NewBlockchainIterator() *BlockchainIterator {
+	bci := &BlockchainIterator{bc.tip, bc.db}
+
+	return bci
+}
